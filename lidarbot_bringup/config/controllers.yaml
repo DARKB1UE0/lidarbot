@@ -1,47 +1,55 @@
-controller_manager: # Node name
+
+# 机器人控制器管理器主节点配置
+controller_manager: # Node name，ros2_control主节点
   ros__parameters:
-    update_rate: 30 # Has to be an integer otherwise errors are encountered
+    update_rate: 30 # 控制器主循环频率（Hz），必须为整数
 
+    # 差分驱动控制器（底盘里程计/运动学）
     diff_controller:
-      type: diff_drive_controller/DiffDriveController
+      type: diff_drive_controller/DiffDriveController # 控制器类型
 
+    # 关节状态发布器（发布所有关节的状态）
     joint_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
+    # IMU传感器发布器
     imu_broadcaster:
       type: imu_sensor_broadcaster/IMUSensorBroadcaster 
 
 
+
+# 差分驱动控制器详细参数（用于底盘运动学、里程计发布等）
 diff_controller:
   ros__parameters:
     
-    publish_rate: 50.0 # Has to be a double otherwise errors are encountered
+    publish_rate: 50.0 # 里程计和速度等信息的发布频率（Hz），必须为浮点数
 
-    base_frame_id: base_footprint
+    base_frame_id: base_footprint # 机器人底盘坐标系名称
 
-    left_wheel_names: ['left_wheel_joint']
-    right_wheel_names: ['right_wheel_joint']
-    wheel_separation: 0.134
-    wheel_radius: 0.0335
+    left_wheel_names: ['left_wheel_joint']  # 左轮关节名（与URDF一致）
+    right_wheel_names: ['right_wheel_joint'] # 右轮关节名
+    wheel_separation: 0.134 # 左右轮中心间距（米）
+    wheel_radius: 0.024    # 轮子半径（米）
 
-    # Obtained from https://wiki.ros.org/diff_drive_controller
+    # 里程计协方差矩阵，对应pose和twist的置信度
     pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
     twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0] 
 
-    # Whether the input has a time stamp or not
+    # 输入速度消息是否带时间戳
     use_stamped_vel: false
 
-    # Odometry fused with IMU is published by robot_localization, so no need to publish a TF
-    # based on encoders alone (https://wiki.ros.org/diff_drive_controller)
+    # 是否发布odom->base_footprint的TF（如已用robot_localization融合IMU则可关闭）
     enable_odom_tf: false
 
+
+# IMU传感器发布器参数
 imu_broadcaster:
   ros__parameters:
 
-    sensor_name: mpu6050
-    frame_id: imu_link
+    sensor_name: mpu6050   # IMU传感器名称
+    frame_id: imu_link     # IMU数据对应的TF坐标系
    
-    # 500 data points used to calculate covariances
+    # 静态协方差（用于滤波/定位），500组数据统计得出
     static_covariance_orientation: [2.63882e-06, 0.0, 0.0, 0.0, 7.50018e-06, 0.0, 0.0, 0.0, 2.89257e-09]
     static_covariance_angular_velocity: [2.71413e-07, 0.0, 0.0, 0.0, 6.79488e-07, 0.0, 0.0, 0.0, 4.37879e-07]
     static_covariance_linear_acceleration: [0.00133755, 0.0, 0.0, 0.0, 0.000209753, 0.0, 0.0, 0.0, 0.00143276]

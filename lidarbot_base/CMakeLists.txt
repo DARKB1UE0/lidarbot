@@ -7,6 +7,7 @@ find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 # COMPILE
 add_library(lidarbot_hardware SHARED 
@@ -64,10 +65,22 @@ target_compile_options(motor_checks_server PRIVATE -w)
 add_executable(motor_checks_client src/motor_checks_client.cpp) 
 ament_target_dependencies(motor_checks_client rclcpp std_srvs)
 
+add_executable(joystick_drive_node
+              src/joystick_drive_node.cpp
+              src/motor_encoder.c
+              src/DEV_Config.c
+              src/PCA9685.c
+              src/MotorDriver.c)
+
+ament_target_dependencies(joystick_drive_node rclcpp geometry_msgs)
+target_link_libraries(joystick_drive_node m wiringPi pthread crypt rt)
+target_compile_options(joystick_drive_node PRIVATE -w)
+
 # Install executables to enable discovery for 'ros2 run'
 install(TARGETS 
     motor_checks_client 
     motor_checks_server
+  joystick_drive_node
     DESTINATION lib/${PROJECT_NAME}
 )
 
