@@ -1,4 +1,5 @@
 // ROS 2 节点：订阅 Twist 指令并调用底层电机驱动，实现手柄控制小车
+// 主要负责：初始化底层电机接口、接收速度命令、限幅输出、超时停车。
 
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -13,7 +14,7 @@ using namespace std::chrono_literals;
 
 namespace
 {
-// 夹紧工具函数，避免对 C++17 std::clamp 的依赖
+// 夹紧工具函数，避免对 C++17 std::clamp 的依赖，确保 PWM 命令在期望范围内
 inline double clamp_value(double value, double min_value, double max_value)
 {
     if (value < min_value)
@@ -27,6 +28,7 @@ inline double clamp_value(double value, double min_value, double max_value)
     return value;
 }
 
+// 硬件初始化只执行一次：GPIO、编码器中断、电机驱动等
 void initialize_motor_interface()
 {
     static bool initialized = false;
@@ -55,12 +57,14 @@ void initialize_motor_interface()
 }
 } // namespace
 
+// JoystickDriveNode：ROS 2 节点包装类，管理参数、订阅和看门狗
 class JoystickDriveNode : public rclcpp::Node
 {
 public:
     JoystickDriveNode()
         : Node("joystick_drive_node"), motors_stopped_(true)
     {
+        // 可配置话题及各项限幅参数，便于在 launch 中覆盖
         cmd_vel_topic_ = declare_parameter<std::string>("cmd_vel_topic", "/cmd_vel_joy");
         max_linear_velocity_ = declare_parameter<double>("max_linear_velocity", 0.4);
         max_angular_velocity_ = declare_parameter<double>("max_angular_velocity", 1.0);
@@ -68,13 +72,16 @@ public:
         max_pwm_percent_ = declare_parameter<double>("max_pwm_percent", 80.0);
         command_timeout_sec_ = declare_parameter<double>("command_timeout", 0.5);
 
+        // 保证底层硬件只初始化一次
         initialize_motor_interface();
         last_command_time_ = this->get_clock()->now();
 
+        // 订阅 Twist 指令并异步处理
         cmd_vel_sub_ = create_subscription<geometry_msgs::msg::Twist>(
             cmd_vel_topic_, rclcpp::QoS{10},
             std::bind(&JoystickDriveNode::twist_callback, this, std::placeholders::_1));
 
+        // 看门狗定时器，用于检测超时未收到指令
         watchdog_timer_ = create_wall_timer(
             100ms, std::bind(&JoystickDriveNode::watchdog_callback, this));
 
@@ -83,6 +90,7 @@ public:
 
     ~JoystickDriveNode() override
     {
+        // 析构前确保电机停止
         set_motor_speeds(0.0, 0.0);
         Motor_Stop(MOTORA);
         Motor_Stop(MOTORB);
@@ -106,6 +114,7 @@ private:
         const double linear_component = linear_norm * max_pwm_percent_;
         const double angular_component = angular_norm * turning_gain_ * max_pwm_percent_;
 
+        // 分别计算左右轮目标 PWM，并作限幅保护
         const double left_command = clamp_value(linear_component - angular_component, -max_pwm_percent_, max_pwm_percent_);
         const double right_command = clamp_value(linear_component + angular_component, -max_pwm_percent_, max_pwm_percent_);
 
@@ -122,6 +131,7 @@ private:
 
         if (elapsed > command_timeout_sec_ && !motors_stopped_)
         {
+            // 超时自动拉闸，防止小车失控
             set_motor_speeds(0.0, 0.0);
             motors_stopped_ = true;
             RCLCPP_WARN(get_logger(), "No Twist command received for %.2f s. Stopping motors.", elapsed);
