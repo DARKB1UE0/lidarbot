@@ -1,8 +1,14 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
+    <xacro:arg name="robot_name" default="lidarbot"/>
+
     <gazebo>
         <plugin name="lidarbot_diff_drive" filename="libgazebo_ros_diff_drive.so">         
+
+            <ros>
+                <namespace>$(arg robot_name)</namespace>
+            </ros>
 
             <!-- Wheel information -->
             <left_joint>left_wheel_joint</left_joint>
@@ -15,8 +21,10 @@
             <max_wheel_acceleration>2</max_wheel_acceleration>
             
             <!-- Output -->
-            <odometry_frame>odom</odometry_frame>
-            <robot_base_frame>base_footprint</robot_base_frame>
+            <command_topic>cmd_vel</command_topic>
+            <odometry_topic>odom</odometry_topic>
+            <odometry_frame>$(arg robot_name)/odom</odometry_frame>
+            <robot_base_frame>$(arg robot_name)/base_footprint</robot_base_frame>
             <publish_odom>true</publish_odom>
             <publish_odom_tf>true</publish_odom_tf>     
             <publish_wheel_tf>true</publish_wheel_tf>

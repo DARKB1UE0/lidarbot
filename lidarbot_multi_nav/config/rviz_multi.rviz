@@ -1,0 +1,46 @@
+Panels:
+  - Class: rviz_common/Displays
+    Help Height: 78
+    Name: Displays
+    Property Tree Widget:
+      Expanded: ~
+    Tree Height: 300
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.5
+      Cell Size: 1
+      Class: rviz_default_plugins/Grid
+      Name: Grid
+    - Class: rviz_default_plugins/Map
+      Name: Robot1 Map
+      Topic: /robot1/map
+      Enabled: true
+    - Class: rviz_default_plugins/Map
+      Name: Robot2 Map
+      Topic: /robot2/map
+    - Class: rviz_default_plugins/Map
+      Name: Robot3 Map
+      Topic: /robot3/map
+    - Class: rviz_default_plugins/LaserScan
+      Name: Robot1 Scan
+      Topic: /robot1/scan
+    - Class: rviz_default_plugins/Group
+      Name: TF
+      Displays:
+        - Class: rviz_default_plugins/TF
+          Name: TF Tree
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: map
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+    - Class: rviz_default_plugins/SetGoal
+  Transformation: ~
+  Value: true

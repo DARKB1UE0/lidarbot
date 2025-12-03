@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="NavigateToPose">
+  <BehaviorTree ID="NavigateToPose">
+    <Sequence name="NavigateWithReplanning">
+      <RecoverInitialPose/>
+      <NavigateToPose/>
+    </Sequence>
+  </BehaviorTree>
+</root>
