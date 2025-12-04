@@ -48,6 +48,72 @@
 
 - `launch/`：各阶段启动脚本（world、spawn、slam、nav、demo）。
 - `config/`：Nav2 参数 (`nav2_robot.yaml`)、SLAM 参数、行为树、RViz 配置。
+
+## 常见问题与调试 (Troubleshooting)
+
+### 1. 参数类型错误 (Invalid Type: Integer vs Double)
+**现象**：
+启动时报错 `parameter 'height' has invalid type: Wrong parameter type, parameter {height} is of type {integer}, setting it to {double} is not allowed.`
+
+**原因**：
+1.  Windows 与 Linux 换行符 (`CRLF` vs `LF`) 不兼容，导致 ROS 2 的 `RewrittenYaml` 工具解析失败，回退到默认的整数参数。
+2.  配置文件中使用了整数（如 `20`）而非浮点数（如 `20.0`），导致类型推断错误。
+
+**解决方案**：
+1.  **强制修复换行符**：在虚拟机中运行以下命令，将所有源码文件转换为 Linux 格式：
+    ```bash
+    cd ~/dev_ws
+    find src -type f \( -name "*.py" -o -name "*.yaml" -o -name "*.xml" -o -name "*.launch" -o -name "*.sh" \) -exec dos2unix {} +
+    
+    # 重新编译
+    colcon build --symlink-install --packages-select lidarbot_multi_nav
+    ```
+2.  **使用浮点数**：在 YAML 文件中，确保 `height`, `width`, `loop_rate` 等参数使用带小数点的写法（如 `3.5`, `20.5`），避免使用 `.0` 结尾（有时会被误判），推荐使用 `.5` 等非零小数强制识别为 Double。
+
+### 2. Gazebo 图形显示错误 (Can't open display)
+**现象**：
+报错 `[Err] [RenderEngine.cc:749] Can't open display:` 或 `Could not load the Qt platform plugin "xcb"`。
+
+**原因**：
+在 VS Code 终端或 SSH 远程终端中运行 Gazebo 时，无法连接到虚拟机的图形桌面环境。
+
+**解决方案：分步启动法**
+不要直接运行 `demo_all`，而是使用两个终端分别启动。
+
+**终端 1：启动 Gazebo 环境**
+```bash
+# 1. 设置显示端口 (通常为 :0)
+export DISPLAY=:0
+# 2. 授予权限
+xhost +
+# 3. 手动启动 Gazebo 并加载世界
+gazebo --verbose -s libgazebo_ros_factory.so install/lidarbot_multi_nav/share/lidarbot_multi_nav/worlds/obstacle_arena.world
+```
+
+**终端 2：启动机器人与导航**
+等待 Gazebo 完全启动后：
+```bash
+# 1. 设置显示端口
+export DISPLAY=:0
+# 2. 启动剩余组件 (禁用 Gazebo 启动，但保留机器人生成和导航)
+ros2 launch lidarbot_multi_nav demo_all.launch.py \
+    use_sim_time:=true \
+    start_gazebo:=false \
+    start_slam:=false
+```
+
+### 3. 传感器初始化超时 (Sensors failed to initialize)
+**现象**：
+Gazebo 报错 `Sensors failed to initialize when loading model[robot2]...`。
+
+**原因**：
+同时生成多个机器人导致 CPU 负载过高，仿真器来不及初始化传感器插件。
+
+**解决方案**：
+已在 `spawn_fleet.launch.py` 中实现了**错峰生成**逻辑：
+- Robot 1: 立即生成
+- Robot 2: 延时 5 秒
+- Robot 3: 延时 10 秒
 - `maps/`：参考地图 (`reference_map.yaml/pgm`)。
 - `worlds/`：Gazebo 场景。
 - `scripts/`：入口脚本（goal_dispatcher）。

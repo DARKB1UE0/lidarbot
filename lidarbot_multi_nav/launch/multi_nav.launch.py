@@ -13,14 +13,20 @@ ROBOTS = ["robot1", "robot2", "robot3"]
 
 def generate_launch_description():
     pkg_share = FindPackageShare("lidarbot_multi_nav").find("lidarbot_multi_nav")
-    params_file = LaunchConfiguration("params_file", default=os.path.join(pkg_share, "config", "nav2_robot.yaml"))
+    params_file = LaunchConfiguration(
+        "params_file",
+        default=os.path.join(pkg_share, "config", "nav2_params_override.yaml"),
+    )
     default_map = os.path.join(pkg_share, "maps", "reference_map.yaml")
     map_file = LaunchConfiguration("map", default=default_map)
     use_sim_time = LaunchConfiguration("use_sim_time", default="true")
 
     ld = LaunchDescription([
         DeclareLaunchArgument("use_sim_time", default_value="true"),
-        DeclareLaunchArgument("params_file", default_value=os.path.join(pkg_share, "config", "nav2_robot.yaml")),
+        DeclareLaunchArgument(
+            "params_file",
+            default_value=os.path.join(pkg_share, "config", "nav2_params_override.yaml"),
+        ),
         DeclareLaunchArgument("map", default_value=default_map),
     ])
 

@@ -28,7 +28,7 @@ bt_navigator:
 controller_server:
   ros__parameters:
     use_sim_time: True
-    controller_frequency: !!float 20
+    controller_frequency: 20.0
     required_missed_control_calls: 4
     progress_checker_plugin: progress_checker
     goal_checker_plugin: goal_checker
@@ -56,7 +56,7 @@ planner_server:
   ros__parameters:
     use_sim_time: True
     planner_plugins: [GridBased]
-    expected_planner_frequency: !!float 20
+    expected_planner_frequency: 20.0
     GridBased:
       plugin: nav2_navfn_planner/NavfnPlanner
       tolerance: 0.5
@@ -79,12 +79,12 @@ local_costmap:
       use_sim_time: True
       global_frame: map
       robot_base_frame: base_link
-      update_frequency: !!float 20
-      publish_frequency: !!float 20
+      update_frequency: 20.0
+      publish_frequency: 20.0
       rolling_window: True
-      width: !!float 6
-      height: !!float 6
-      resolution: !!float 0.05
+      width: 6.5
+      height: 6.5
+      resolution: 0.05
       footprint: "[[0.22, 0.18], [0.22, -0.18], [-0.22, -0.18], [-0.22, 0.18]]"
       plugins: [obstacle_layer, inflation_layer]
       obstacle_layer:
@@ -92,14 +92,14 @@ local_costmap:
         observation_sources: scan
         scan:
           topic: scan
-          max_obstacle_height: !!float 2
+          max_obstacle_height: 2.0
           clearing: True
           marking: True
           data_type: LaserScan
       inflation_layer:
         plugin: nav2_costmap_2d::InflationLayer
-        inflation_radius: !!float 0.45
-        cost_scaling_factor: !!float 3
+        inflation_radius: 0.45
+        cost_scaling_factor: 3.0
 
 global_costmap:
   global_costmap:
@@ -107,11 +107,11 @@ global_costmap:
       use_sim_time: True
       global_frame: map
       robot_base_frame: base_link
-      update_frequency: !!float 5
-      publish_frequency: !!float 5
-      width: !!float 20
-      height: !!float 20
-      resolution: !!float 0.05
+      update_frequency: 5.0
+      publish_frequency: 5.0
+      width: 20.5
+      height: 20.5
+      resolution: 0.05
       track_unknown_space: True
       footprint: "[[0.22, 0.18], [0.22, -0.18], [-0.22, -0.18], [-0.22, 0.18]]"
       plugins: [static_layer, obstacle_layer, inflation_layer]
@@ -122,16 +122,16 @@ global_costmap:
         observation_sources: scan
         scan:
           topic: scan
-          max_obstacle_height: !!float 2
+          max_obstacle_height: 2.0
           clearing: True
           marking: True
           data_type: LaserScan
       inflation_layer:
         plugin: nav2_costmap_2d::InflationLayer
-        inflation_radius: !!float 0.55
-        cost_scaling_factor: !!float 2
+        inflation_radius: 0.55
+        cost_scaling_factor: 2.0
 
 waypoint_follower:
   ros__parameters:
     use_sim_time: True
-    loop_rate: !!float 5
+    loop_rate: 5.5

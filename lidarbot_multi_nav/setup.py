@@ -19,6 +19,7 @@ setup(
         ('share/' + package_name + '/config', [
             'config/slam_params.yaml',
             'config/nav2_robot.yaml',
+            'config/nav2_params_override.yaml',
             'config/behavior_tree.xml',
             'config/rviz_multi.rviz',
         ]),

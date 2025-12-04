@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, TimerAction
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch.substitutions import LaunchConfiguration, Command
@@ -53,6 +53,14 @@ def generate_launch_description():
             ],
         )
 
-        actions.extend([state_pub, spawn])
+        # Add a delay to stagger the spawning of robots to reduce load on Gazebo
+        # Robot 1: 0s delay, Robot 2: 5s delay, Robot 3: 10s delay
+        delay_time = ROBOTS.index(robot) * 5.0
+        
+        if delay_time > 0:
+            actions.append(state_pub)
+            actions.append(TimerAction(period=delay_time, actions=[spawn]))
+        else:
+            actions.extend([state_pub, spawn])
 
     return LaunchDescription(actions)
