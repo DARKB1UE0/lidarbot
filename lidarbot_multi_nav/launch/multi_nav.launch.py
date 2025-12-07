@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, TimerAction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import PushRosNamespace
 from launch_ros.substitutions import FindPackageShare
@@ -69,6 +69,14 @@ def generate_launch_description():
                 }.items(),
             ),
         ])
-        ld.add_action(group)
+        
+        # Stagger navigation launch to prevent CPU spikes
+        # Robot 1: 0s, Robot 2: 10s, Robot 3: 20s
+        delay_time = ROBOTS.index(robot) * 10.0
+        
+        if delay_time > 0:
+            ld.add_action(TimerAction(period=delay_time, actions=[group]))
+        else:
+            ld.add_action(group)
 
     return ld

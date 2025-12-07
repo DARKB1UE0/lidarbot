@@ -54,8 +54,8 @@ def generate_launch_description():
         )
 
         # Add a delay to stagger the spawning of robots to reduce load on Gazebo
-        # Robot 1: 0s delay, Robot 2: 5s delay, Robot 3: 10s delay
-        delay_time = ROBOTS.index(robot) * 5.0
+        # Robot 1: 0s delay, Robot 2: 20s delay, Robot 3: 40s delay
+        delay_time = ROBOTS.index(robot) * 20.0
         
         if delay_time > 0:
             actions.append(state_pub)

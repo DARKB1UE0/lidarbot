@@ -102,6 +102,29 @@ ros2 launch lidarbot_multi_nav demo_all.launch.py \
     start_slam:=false
 ```
 
+### 3. Gazebo 卡死 / 显卡占用归零 (Resource Starvation)
+**现象**：
+启动 `demo_all.launch.py` 后，Gazebo 界面卡死，物理机显卡占用从 15% 掉到 0%。
+
+**原因**：
+同时启动 3 台机器人的导航栈（Nav2）会瞬间消耗大量 CPU 资源，导致 Gazebo 物理引擎线程饥饿（Starvation），仿真时钟停止，渲染线程挂起。
+
+**解决方案：分级交错启动 (Staggered Launch) 与 物理引擎优化**
+我们已经进一步优化了启动策略和仿真参数，以适应低性能虚拟机环境：
+
+1.  **物理引擎降频**：将 Gazebo 物理更新频率从 1000Hz 降至 **250Hz** (`max_step_size` 0.004)。这能显著降低 CPU 负载。
+2.  **传感器降级**：
+    *   **Lidar**：频率降至 5Hz，采样点数降至 180。
+    *   **Camera**：频率降至 1Hz，分辨率降至 320x240。
+    *   **IMU**：已暂时禁用以节省资源。
+3.  **增加超时时间**：在 `obstacle_arena.world` 中设置了 `model_plugin_loading_timeout` 为 120秒。
+4.  **延长启动间隔**：
+    *   机器人生成间隔延长至 **20秒**。
+    *   导航启动推迟至 **60秒**。
+
+**注意**：
+请耐心等待启动过程，不要在所有节点完全启动前进行操作。整个启动过程大约需要 **2 分钟**。
+
 ### 3. 传感器初始化超时 (Sensors failed to initialize)
 **现象**：
 Gazebo 报错 `Sensors failed to initialize when loading model[robot2]...`。

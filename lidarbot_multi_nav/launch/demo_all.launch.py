@@ -20,12 +20,12 @@ def generate_launch_description():
     )
 
     spawn = TimerAction(
-        period=5.0,
+        period=3.0,
         actions=[IncludeLaunchDescription(PythonLaunchDescriptionSource(os.path.join(pkg_share, "launch", "spawn_fleet.launch.py")))]
     )
 
     slam = TimerAction(
-        period=10.0,
+        period=8.0,
         actions=[
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(os.path.join(pkg_share, "launch", "multi_slam.launch.py")),
