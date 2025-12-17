@@ -1,97 +1,66 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <!-- Imu sensor  -->
-  <link name="imu_link">
-    <visual name="imu_visual">
-      <geometry>
-        <mesh filename="package://lidarbot_description/meshes/MPU6050.dae"/>
-      </geometry>
-    </visual>
-  </link>
+    <!-- 【修改点1】接收机器人名字参数 -->
+    <xacro:arg name="robot_name" default=""/>
 
-  <joint name="imu_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="imu_link"/>
-    <origin xyz="0.045 0 0.0175" rpy="0 0 0"/> 
-  </joint>
+    <link name="lidar_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="0.035" length="0.02"/>
+            </geometry>
+            <material name="black">
+                <color rgba="0 0 0 1"/>
+            </material>
+        </visual> 
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="0.037" length="0.021"/>
+            </geometry>
+        </collision>
+        <xacro:cylinder_inertia mass="0.1" length="0.021" radius="0.037">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </xacro:cylinder_inertia>
+    </link>
 
- <gazebo reference="imu_link">
-   <sensor name="mpu6050_imu" type="imu">
-    <plugin name="imu_controller" filename="libgazebo_ros_imu_sensor.so">
-      <frame_name>imu_link</frame_name>
-       <ros>
-         <remapping>~/out:=imu_broadcaster/imu</remapping>
-       </ros>
-      <initial_orientation_as_reference>false</initial_orientation_as_reference>
-    </plugin>
-     <always_on>true</always_on>
-     <!-- Reduced update rate for performance (was 100) -->
-     <update_rate>50</update_rate>
-     <visualize>false</visualize>
-     <imu>
-       <angular_velocity>
-         <x>
-           <noise type="gaussian">
-             <mean>0.0</mean>
-             <stddev>2e-4</stddev>
-           </noise>
-         </x>
-         <y>
-           <noise type="gaussian">
-             <mean>0.0</mean>
-             <stddev>2e-4</stddev>
-           </noise>
-         </y>
-         <z>
-           <noise type="gaussian">
-             <mean>0.0</mean>
-             <stddev>2e-4</stddev>
-           </noise>
-         </z>
-       </angular_velocity>
-       <linear_acceleration>
-         <x>
-           <noise type="gaussian">
-             <mean>0.0</mean>
-             <stddev>1.7e-2</stddev>
-           </noise>
-         </x>
-         <y>
-           <noise type="gaussian">
-             <mean>0.0</mean>
-             <stddev>1.7e-2</stddev>
-           </noise>
-         </y>
-         <z>
-           <noise type="gaussian">
-             <mean>0.0</mean>
-             <stddev>1.7e-2</stddev>
-           </noise>
-         </z>
-       </linear_acceleration>
-       <orientation>
-         <x>
-           <noise type="gaussian">
-              <mean>0.0</mean>
-              <stddev>2e-3</stddev>
-            </noise>
-          </x>
-          <y>
-            <noise type="gaussian">
-              <mean>0.0</mean>
-              <stddev>2e-3</stddev>
-            </noise>
-          </y>
-          <z>
-            <noise type="gaussian">
-              <mean>0.0</mean>
-              <stddev>2e-3</stddev>
-            </noise>
-          </z>
-        </orientation>
-     </imu>
-   </sensor>
- </gazebo>
+    <joint name="lidar_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="lidar_link"/>
+        <origin xyz="0.0 0 0.05" rpy="0 0 0"/>
+    </joint>
+
+    <gazebo reference="lidar_link">
+        <material>Gazebo/Black</material>
+        <sensor name="lidar" type="ray">
+            <pose> 0 0 0 0 0 0 </pose>
+            <visualize>false</visualize>
+            <update_rate>10</update_rate>
+            <ray>
+                <scan>
+                    <horizontal>
+                        <samples>360</samples>
+                        <resolution>1</resolution>
+                        <min_angle>-3.14</min_angle>
+                        <max_angle>3.14</max_angle>
+                    </horizontal>
+                </scan>
+                <range>
+                    <min>0.3</min>
+                    <max>10</max>
+                </range>
+            </ray>
+            <plugin name="laser_controller" filename="libgazebo_ros_ray_sensor.so">
+                <ros>
+                    <!-- 【修改点2】加入命名空间，解决崩溃的关键！ -->
+                    <namespace>$(arg robot_name)</namespace>
+                    <remapping>~/out:=scan</remapping>
+                </ros>
+                <output_type>sensor_msgs/LaserScan</output_type>
+                <frame_name>lidar_link</frame_name>
+            </plugin>
+        </sensor>
+    </gazebo>
 
 </robot>

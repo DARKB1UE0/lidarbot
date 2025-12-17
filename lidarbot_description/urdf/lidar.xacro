@@ -1,59 +1,60 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
+    <!-- 【修改点1】接收机器人名字参数 -->
+    <xacro:arg name="robot_name" default=""/>
+
     <link name="lidar_link">
         <visual>
-            <origin xyz="0 -0.0009 -0.011" rpy="0 0 0"/>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://lidarbot_description/meshes/rplidar_top.dae"/>
+                <cylinder radius="0.035" length="0.02"/>
             </geometry>
+            <material name="black">
+                <color rgba="0 0 0 1"/>
+            </material>
         </visual> 
         <collision>
-            <origin xyz="0 -0.0028 0" rpy="0 0 0"/>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
                 <cylinder radius="0.037" length="0.021"/>
             </geometry>
         </collision>
-         <xacro:cylinder_inertia mass="0.07" length="0.021" radius="0.037">
+        <xacro:cylinder_inertia mass="0.1" length="0.021" radius="0.037">
             <origin xyz="0 0 0" rpy="0 0 0"/>
         </xacro:cylinder_inertia>
-   </link>
+    </link>
 
     <joint name="lidar_joint" type="fixed">
         <parent link="base_link"/>
         <child link="lidar_link"/>
-        <origin xyz="0.1385 0.0095 0.08" rpy="0 0 ${-pi/2}"/>
-        <axis xyz="0 0 1"/>
+        <origin xyz="0.0 0 0.05" rpy="0 0 0"/>
     </joint>
 
     <gazebo reference="lidar_link">
+        <material>Gazebo/Black</material>
         <sensor name="lidar" type="ray">
-            <pose>0 0 0 0 0 0</pose>
-            <always_on>true</always_on>
+            <pose> 0 0 0 0 0 0 </pose>
             <visualize>false</visualize>
             <update_rate>10</update_rate>
             <ray>
                 <scan>
                     <horizontal>
                         <samples>360</samples>
+                        <resolution>1</resolution>
                         <min_angle>-3.14</min_angle>
                         <max_angle>3.14</max_angle>
                     </horizontal>
                 </scan>
                 <range>
-                    <min>0.15</min>
-                    <max>6.0</max>
-                    <!-- <max>12.0</max> -->
-                    <resolution>0.01500</resolution>
-		        </range>
-                <noise>
-                    <type>gaussian</type>
-                    <mean>0.0</mean>
-                    <stddev>0.01</stddev>
-                </noise>
+                    <min>0.3</min>
+                    <max>10</max>
+                </range>
             </ray>
-            <plugin name="lidar_controller" filename="libgazebo_ros_ray_sensor.so">
+            <plugin name="laser_controller" filename="libgazebo_ros_ray_sensor.so">
                 <ros>
+                    <!-- 【修改点2】加入命名空间，解决崩溃的关键！ -->
+                    <namespace>$(arg robot_name)</namespace>
                     <remapping>~/out:=scan</remapping>
                 </ros>
                 <output_type>sensor_msgs/LaserScan</output_type>
@@ -63,3 +64,5 @@
     </gazebo>
 
 </robot>
+
+
