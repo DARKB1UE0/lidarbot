@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, TimerAction
+from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import PushRosNamespace
 from launch_ros.substitutions import FindPackageShare
@@ -10,9 +10,13 @@ from nav2_common.launch import RewrittenYaml
 
 ROBOTS = ["robot1", "robot2", "robot3"]
 
-
 def generate_launch_description():
     pkg_share = FindPackageShare("lidarbot_multi_nav").find("lidarbot_multi_nav")
+    
+    # 路径配置
+    nav2_bringup_dir = FindPackageShare("nav2_bringup").find("nav2_bringup")
+    nav_launch_file = os.path.join(nav2_bringup_dir, "launch", "bringup_launch.py")
+
     params_file = LaunchConfiguration(
         "params_file",
         default=os.path.join(pkg_share, "config", "nav2_params_override.yaml"),
@@ -21,62 +25,43 @@ def generate_launch_description():
     map_file = LaunchConfiguration("map", default=default_map)
     use_sim_time = LaunchConfiguration("use_sim_time", default="true")
 
-    ld = LaunchDescription([
-        DeclareLaunchArgument("use_sim_time", default_value="true"),
-        DeclareLaunchArgument(
-            "params_file",
-            default_value=os.path.join(pkg_share, "config", "nav2_params_override.yaml"),
-        ),
-        DeclareLaunchArgument("map", default_value=default_map),
-    ])
+    ld = LaunchDescription()
+
+    # 声明参数
+    ld.add_action(DeclareLaunchArgument("map", default_value=default_map))
+    ld.add_action(DeclareLaunchArgument("params_file", default_value=params_file))
+    ld.add_action(DeclareLaunchArgument("use_sim_time", default_value="true"))
 
     for robot in ROBOTS:
-        robot_map_frame = f"{robot}/map"
-        robot_odom_frame = f"{robot}/odom"
-        robot_base_frame = f"{robot}/base_link"
-        robot_scan_topic = f"/{robot}/scan"
-
+        # 使用 RewrittenYaml 自动处理参数中的命名空间
         param_substitutions = {
-            "use_sim_time": use_sim_time,
-            "global_frame": robot_map_frame,
-            "map_frame": robot_map_frame,
-            "robot_base_frame": robot_base_frame,
-            "base_frame_id": robot_base_frame,
-            "odom_frame": robot_odom_frame,
-            "odom_frame_id": robot_odom_frame,
-            "scan_topic": robot_scan_topic,
-            "yaml_filename": map_file,
+            'use_sim_time': use_sim_time,
+            'yaml_filename': map_file
         }
 
         configured_params = RewrittenYaml(
             source_file=params_file,
-            root_key="",
+            root_key=robot,
             param_rewrites=param_substitutions,
-            convert_types=True,
+            convert_types=True
         )
 
-        group = GroupAction([
+        # 创建针对每个机器人的导航组
+        nav_group = GroupAction([
             PushRosNamespace(robot),
+            
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(FindPackageShare("nav2_bringup").find("nav2_bringup"), "launch", "bringup_launch.py")
-                ),
+                PythonLaunchDescriptionSource(nav_launch_file),
                 launch_arguments={
-                    "namespace": robot,
-                    "use_sim_time": use_sim_time,
-                    "map": map_file,
-                    "params_file": configured_params,
+                    'namespace': robot,
+                    'use_namespace': 'True',
+                    'map': map_file,
+                    'use_sim_time': use_sim_time,
+                    'params_file': configured_params,
+                    'autostart': 'true',
                 }.items(),
-            ),
+            )
         ])
-        
-        # Stagger navigation launch to prevent CPU spikes
-        # Robot 1: 0s, Robot 2: 10s, Robot 3: 20s
-        delay_time = ROBOTS.index(robot) * 10.0
-        
-        if delay_time > 0:
-            ld.add_action(TimerAction(period=delay_time, actions=[group]))
-        else:
-            ld.add_action(group)
+        ld.add_action(nav_group)
 
     return ld

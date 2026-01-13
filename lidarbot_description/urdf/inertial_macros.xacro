@@ -1,18 +1,24 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-    <!-- Some standard inertial calculations, obtained from: https://en.wikipedia.org/wiki/List_of_moments_of_inertia -->
-    <xacro:macro name="box_inertia" params="mass length width height *origin">
+    <!-- ================================================== -->
+    <!-- 修正 1: 宏名称改为 inertial_box (配合 imu.xacro) -->
+    <!-- 修正 2: 参数改为 x, y, z (配合 imu.xacro)       -->
+    <!-- ================================================== -->
+    <xacro:macro name="inertial_box" params="mass x y z *origin">
         <inertial>
             <xacro:insert_block name="origin"/>
             <mass value="${mass}"/>
-            <inertia ixx="${(mass/12) * (width*width + height*height)}" ixy="0.0" ixz="0.0" 
-                    iyy="${(mass/12) * (length*length + height*height)}" iyz="0.0" 
-                    izz="${(mass/12) * (length*length + width*width)}"/>
+            <inertia ixx="${(mass/12) * (y*y + z*z)}" ixy="0.0" ixz="0.0" 
+                    iyy="${(mass/12) * (x*x + z*z)}" iyz="0.0" 
+                    izz="${(mass/12) * (x*x + y*y)}"/>
         </inertial>
     </xacro:macro>
 
-    <xacro:macro name="sphere_inertia" params="mass radius *origin">
+    <!-- ================================================== -->
+    <!-- 修正: 宏名称改为 inertial_sphere                    -->
+    <!-- ================================================== -->
+    <xacro:macro name="inertial_sphere" params="mass radius *origin">
         <inertial>
             <xacro:insert_block name="origin"/>
             <mass value="${mass}"/>
@@ -22,7 +28,10 @@
         </inertial>
     </xacro:macro>
     
-    <xacro:macro name="cylinder_inertia" params="mass length radius *origin">
+    <!-- ================================================== -->
+    <!-- 修正: 宏名称改为 inertial_cylinder (配合 lidar.xacro) -->
+    <!-- ================================================== -->
+    <xacro:macro name="inertial_cylinder" params="mass length radius *origin">
         <inertial>
             <xacro:insert_block name="origin"/>
             <mass value="${mass}" />
@@ -33,3 +42,4 @@
     </xacro:macro>
 
 </robot>
+

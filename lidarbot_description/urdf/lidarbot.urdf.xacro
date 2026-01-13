@@ -1,22 +1,25 @@
 <?xml version="1.0" ?>
-<robot name="lidarbot" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="lidarbot">
 
-    <xacro:arg name="use_ros2_control" default="true"/>
-    <xacro:arg name="sim_mode" default="false"/>
-    <xacro:arg name="robot_name" default="lidarbot"/>
+    <!-- ==================================================== -->
+    <!-- 1. 定义 robot_name 参数 (默认为空，多车时传入 robot1 等) -->
+    <!-- ==================================================== -->
+    <xacro:arg name="robot_name" default=""/>
 
+    <xacro:include filename="inertial_macros.xacro"/>
     <xacro:include filename="lidarbot_core.xacro"/>
 
+    <!-- 根据参数选择控制方式 -->
     <xacro:if value="$(arg use_ros2_control)">
-        <xacro:include filename="ros2_control.xacro"/>
+        <xacro:include filename="ros2_control.xacro" />
     </xacro:if>
-
     <xacro:unless value="$(arg use_ros2_control)">
-        <xacro:include filename="gazebo_control.xacro"/>
+        <xacro:include filename="gazebo_control.xacro" />
     </xacro:unless>
 
-    <xacro:include filename="camera.xacro"/>
-    <!-- <xacro:include filename="imu.xacro"/> -->
-    <xacro:include filename="lidar.xacro"/> 
-
+    <xacro:include filename="lidar.xacro" />
+    <xacro:include filename="camera.xacro" />
+    <xacro:include filename="imu.xacro" />
+    
 </robot>
+

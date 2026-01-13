@@ -1,66 +1,48 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-    <!-- 【修改点1】接收机器人名字参数 -->
-    <xacro:arg name="robot_name" default=""/>
-
-    <link name="lidar_link">
-        <visual>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <cylinder radius="0.035" length="0.02"/>
-            </geometry>
-            <material name="black">
-                <color rgba="0 0 0 1"/>
-            </material>
-        </visual> 
-        <collision>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <geometry>
-                <cylinder radius="0.037" length="0.021"/>
-            </geometry>
-        </collision>
-        <xacro:cylinder_inertia mass="0.1" length="0.021" radius="0.037">
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-        </xacro:cylinder_inertia>
-    </link>
-
-    <joint name="lidar_joint" type="fixed">
-        <parent link="base_link"/>
-        <child link="lidar_link"/>
-        <origin xyz="0.0 0 0.05" rpy="0 0 0"/>
+    <joint name="imu_joint" type="fixed">
+        <parent link="chassis"/>
+        <child link="imu_link"/>
+        <origin xyz="0 0 0.1" rpy="0 0 0"/>
     </joint>
 
-    <gazebo reference="lidar_link">
-        <material>Gazebo/Black</material>
-        <sensor name="lidar" type="ray">
-            <pose> 0 0 0 0 0 0 </pose>
-            <visualize>false</visualize>
-            <update_rate>10</update_rate>
-            <ray>
-                <scan>
-                    <horizontal>
-                        <samples>360</samples>
-                        <resolution>1</resolution>
-                        <min_angle>-3.14</min_angle>
-                        <max_angle>3.14</max_angle>
-                    </horizontal>
-                </scan>
-                <range>
-                    <min>0.3</min>
-                    <max>10</max>
-                </range>
-            </ray>
-            <plugin name="laser_controller" filename="libgazebo_ros_ray_sensor.so">
+    <link name="imu_link">
+        <visual>
+            <geometry>
+                <box size="0.05 0.05 0.05"/>
+            </geometry>
+            <material name="black"/>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.05 0.05 0.05"/>
+            </geometry>
+        </collision>
+        <xacro:inertial_box mass="0.1" x="0.05" y="0.05" z="0.05">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </xacro:inertial_box>
+    </link>
+
+    <gazebo reference="imu_link">
+        <gravity>true</gravity>
+        <sensor name="imu_sensor" type="imu">
+            <always_on>true</always_on>
+            <update_rate>100</update_rate>
+            <visualize>true</visualize>
+            <topic>__default_topic__</topic>
+            <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
                 <ros>
-                    <!-- 【修改点2】加入命名空间，解决崩溃的关键！ -->
+                    <!-- 关键修改：添加命名空间 -->
                     <namespace>$(arg robot_name)</namespace>
-                    <remapping>~/out:=scan</remapping>
+                    <remapping>~/out:=imu</remapping>
                 </ros>
-                <output_type>sensor_msgs/LaserScan</output_type>
-                <frame_name>lidar_link</frame_name>
+                <initial_orientation_as_reference>false</initial_orientation_as_reference>
+                <!-- 关键修改：Frame ID 加上前缀 -->
+                <frame_name>$(arg robot_name)/imu_link</frame_name>
             </plugin>
         </sensor>
     </gazebo>
 
 </robot>
+

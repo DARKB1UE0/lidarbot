@@ -5,6 +5,8 @@ from launch.actions import DeclareLaunchArgument, TimerAction
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch.substitutions import LaunchConfiguration, Command
+# [修改 1] 引入 ParameterValue
+from launch_ros.parameter_descriptions import ParameterValue 
 
 ROBOTS = [
     {"name": "robot1", "x": -2.0, "y": 0.0, "yaw": 0.0},
@@ -22,6 +24,19 @@ def generate_launch_description():
     actions = [DeclareLaunchArgument("use_sim_time", default_value="true")]
 
     for robot in ROBOTS:
+        # [修改 2] 创建 Command 并用 ParameterValue 包裹
+        # 强制声明 value_type=str，解决 "Unable to parse... as yaml" 错误
+        robot_desc_param = ParameterValue(
+            Command([
+                "xacro ",
+                robot_xacro,
+                " robot_name:=", robot["name"],
+                " use_ros2_control:=false",
+                " sim_mode:=true",
+            ]),
+            value_type=str
+        )
+
         state_pub = Node(
             package="robot_state_publisher",
             executable="robot_state_publisher",
@@ -29,15 +44,7 @@ def generate_launch_description():
             parameters=[
                 {"use_sim_time": use_sim_time},
                 {"frame_prefix": f"{robot['name']}/"},
-                {
-                    "robot_description": Command([
-                        "xacro ",
-                        robot_xacro,
-                        " robot_name:=", robot["name"],
-                        " use_ros2_control:=false",
-                        " sim_mode:=true",
-                    ])
-                },
+                {"robot_description": robot_desc_param}, # 使用包裹后的参数
             ],
         )
 
